@@ -6,7 +6,33 @@
 #include <sys/wait.h>
 #include <errno.h>
 
+#define HISTORY_SIZE 100
+
 extern char **environ;
+char *history[HISTORY_SIZE];
+int history_count = 0;
+
+void add_to_history(char *command)
+{
+	if (history_count < HISTORY_SIZE)
+	{
+		history[history_count] = strdup(command);
+	}
+	else
+	{
+		free(history[0]);
+		memmove(history, history + 1, (HISTORY_SIZE - 1) * sizeof(char *));
+		history[HISTORY_SIZE - 1] = strdup(command);
+	}
+}
+
+void print_history()
+{
+	for (int i = 0; i < history_count; i++)
+	{
+		printf("%d %s\n", i + 1, history[i]);
+	}
+}
 
 int execute_builtin(char **args)
 {
@@ -34,6 +60,49 @@ int execute_builtin(char **args)
 		printf("cd\n");
 		printf("exit\n");
 		printf("help\n");
+		return (1);
+	}
+	else if (strcmp(args[0], "history") == 0)
+	{
+		print_history();
+		return (1);
+	}
+	else if (strcmp(args[0], "setenv") == 0)
+	{
+		if (args[1] && args[2])
+		{
+			if (setenv(args[1], args[2], 1) != 0)
+			{
+				perror("setenv");
+			}
+		}
+		else
+		{
+			fprintf(stderr, "setenv: expected arguments\n");
+		}
+		return (1);
+	}
+	else if (strcmp(args[0], "unsetenv") == 0)
+	{
+		if (args[1])
+		{
+			if (unsetenv(args[1]) != 0)
+			{
+				perror("unsetenv");
+			}
+		}
+		else
+		{
+			fprintf(stderr, "unsetenv: expected argument\n");
+		}
+		return (1);
+	}
+	else if (strcmp(args[0], "printenv") == 0)
+	{
+		for (char **env = environ; *env; ++env)
+		{
+			printf("%s\n", *env);
+		}
 		return (1);
 	}
 	return (0);
@@ -98,40 +167,40 @@ void execute_commands(char **args)
 
 void simple_shell(void)
 {
-    char *buffer = NULL;
-    size_t buffer_size = 0;
-    ssize_t line_size;
+	char *buffer = NULL;
+	size_t buffer_size = 0;
+	ssize_t line_size;
 
-    while (1)
-    {
-        printf("simple_shell$ ");
-        fflush(stdout);
+	while (1)
+	{
+		printf("simple_shell$ ");
+		fflush(stdout);
 
-        line_size = getline(&buffer, &buffer_size, stdin);
-        if (line_size == -1)
-        {
-            printf("\n");
-            break;
-        }
+		line_size = getline(&buffer, &buffer_size, stdin);
+		if (line_size == -1)
+		{
+			printf("\n");
+			break;
+		}
 
-        buffer[strcspn(buffer, "\n")] = '\0';
+		buffer[strcspn(buffer, "\n")] = '\0';
 
-        if (strlen(buffer) == 0)
-            continue;
+		if (strlen(buffer) == 0)
+			continue;
 
-        char **args = parse_input(buffer);
+		char **args = parse_input(buffer);
 
-        if (execute_builtin(args))
-        {
-            free(args);
-            continue;
-        }
+		if (execute_builtin(args))
+		{
+			free(args);
+			continue;
+		}
 
-        execute_commands(args);
-        free(args);
-    }
+		execute_commands(args);
+		free(args);
+	}
 
-    free(buffer);
+	free(buffer);
 }
 
 int main(void)
