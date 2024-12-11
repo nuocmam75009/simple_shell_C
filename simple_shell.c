@@ -68,13 +68,14 @@ int execute_builtin(char **args)
 		printf("Type program names and arguments, and hit enter.\n");
 		printf("The following are built in:\n");
 		printf("cd\n");
+		printf("ls\n");
 		printf("exit\n");
 		printf("help\n");
 		printf("history\n");
 		printf("setenv\n");
 		printf("unsetenv\n");
 		printf("printenv\n");
-		printf("ls\n");
+
 		return (1);
 	}
 	else if (strcmp(args[0], "history") == 0)
