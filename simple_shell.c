@@ -14,15 +14,25 @@ int history_count = 0;
 
 void add_to_history(char *command)
 {
+	if (strlen(command) == 0)
+	{
+		return;
+	}
+
 	if (history_count < HISTORY_SIZE)
 	{
-		history[history_count] = strdup(command);
+		history[history_count++] = strdup(command);
 	}
 	else
 	{
 		free(history[0]);
 		memmove(history, history + 1, (HISTORY_SIZE - 1) * sizeof(char *));
 		history[HISTORY_SIZE - 1] = strdup(command);
+		if (!history[HISTORY_SIZE - 1])
+		{
+			perror("Failed to add command to history!");
+			exit(EXIT_FAILURE);
+		}
 	}
 }
 
@@ -60,6 +70,11 @@ int execute_builtin(char **args)
 		printf("cd\n");
 		printf("exit\n");
 		printf("help\n");
+		printf("history\n");
+		printf("setenv\n");
+		printf("unsetenv\n");
+		printf("printenv\n");
+		printf("ls\n");
 		return (1);
 	}
 	else if (strcmp(args[0], "history") == 0)
